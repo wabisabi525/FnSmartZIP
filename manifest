@@ -1,0 +1,13 @@
+appname               = FnSmartZIP
+version               = 1.0.0
+display_name          = FnSmartZIP
+desc                  = `<div><strong>FnSmartZIP</strong><br/>飞牛智能分卷解压，面向 fnOS 文件管理器右键场景的压缩包与分卷解压工具。<br/><br/><strong>主要能力</strong><br/>• 支持普通 7Z、ZIP、RAR、TAR 及常见压缩格式<br/>• 支持 .7z.001、.zip.001、.zip + .z01、.part1.rar 与旧式 RAR 分卷<br/>• 预览压缩包文件树并选择部分文件解压<br/>• 可选择已授权共享目录作为输出位置<br/>• 提供 UTF-8、简体中文、繁体中文、日文和韩文代码页<br/>• 支持密码记忆与选择、进度显示和停止解压<br/><br/><strong>权限提示</strong><br/>请在 fnOS 应用设置中授予 FnSmartZIP 对源文件和目标共享目录的读写权限。</div>`
+platform              = x86
+source                = thirdparty
+maintainer            = wabisabi525
+maintainer_url        = https://github.com/wabisabi525
+distributor           = wabisabi525
+distributor_url       = https://github.com/wabisabi525
+desktop_uidir         = ui
+desktop_applaunchname = FnSmartZIP.Application
+install_dep_apps      = nodejs_v22

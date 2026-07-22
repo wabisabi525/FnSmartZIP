@@ -1,0 +1,7 @@
+app/ui/*.cgi text eol=lf
+cmd/* text eol=lf
+*.js text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+manifest text eol=lf
+config/* text eol=lf

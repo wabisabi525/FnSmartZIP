@@ -1,0 +1,1345 @@
+@font-face {
+    font-family: "Inter Variable";
+    src: url("../fonts/InterVariable.woff2?v=4.1") format("woff2");
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+:root {
+    --font-ui: "Inter Variable", "Inter", "Segoe UI Variable Text",
+        "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI",
+        "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB",
+        "Noto Sans CJK SC", "Noto Sans SC", Arial, sans-serif;
+    --bg: #edf1f2;
+    --surface: #ffffff;
+    --surface-soft: #f7f9f9;
+    --ink: #1d282c;
+    --muted: #68777d;
+    --line: #d7dfe1;
+    --line-strong: #c4cfd2;
+    --accent: #2786dc;
+    --accent-dark: #1d6fb8;
+    --accent-soft: #eaf4fd;
+    --danger: #b42318;
+    --danger-soft: #fff0ed;
+    --warning: #9a5b08;
+    --warning-soft: #fff7e7;
+    --success: #217a4a;
+    --success-soft: #e9f6ef;
+    --shadow: 0 12px 34px rgba(31, 48, 55, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--ink);
+    background: var(--bg);
+    font-family: var(--font-ui);
+    font-weight: 400;
+    line-height: 1.45;
+    font-kerning: normal;
+    font-optical-sizing: auto;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+button,
+select,
+input {
+    letter-spacing: 0;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+h1,
+h2,
+h3,
+p,
+dl,
+dd {
+    margin: 0;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.app-shell {
+    min-height: 100vh;
+    padding: 22px;
+}
+
+.workspace {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+}
+
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 14px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.brand h1 {
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.brand p {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.status-badge {
+    min-width: 116px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--muted);
+    background: var(--surface);
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.status-badge.ok {
+    color: var(--success);
+    border-color: #b9dfca;
+    background: var(--success-soft);
+}
+
+.status-badge.fail {
+    color: var(--danger);
+    border-color: #efc4bd;
+    background: var(--danger-soft);
+}
+
+.archive-summary,
+.file-panel,
+.settings-panel,
+.job-bar {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.archive-summary {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr) auto;
+    gap: 20px;
+    align-items: center;
+    padding: 20px;
+}
+
+.archive-type {
+    display: grid;
+    place-items: center;
+    width: 68px;
+    height: 68px;
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    color: var(--accent-dark);
+    background: var(--accent-soft);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.eyebrow,
+.panel-head p,
+.field small,
+.job-copy p {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.archive-copy h2 {
+    margin: 5px 0 7px;
+    overflow-wrap: anywhere;
+    font-size: 21px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.path-text {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.archive-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(74px, auto));
+    gap: 8px;
+}
+
+.archive-metrics div {
+    min-width: 74px;
+    padding: 10px;
+    border-left: 1px solid var(--line);
+}
+
+.archive-metrics dt {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.archive-metrics dd {
+    margin-top: 5px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.warning-list {
+    margin-top: 9px;
+    padding: 9px 11px;
+    border: 1px solid #ecd29a;
+    border-radius: 6px;
+    color: var(--warning);
+    background: var(--warning-soft);
+    font-size: 12px;
+}
+
+.warning-list[hidden],
+.dialog-backdrop[hidden],
+button[hidden] {
+    display: none;
+}
+
+.notice-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    width: 100%;
+    margin: 12px 0;
+}
+
+.notice {
+    flex: 1;
+    min-width: 0;
+    min-height: 38px;
+    padding: 10px 13px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+}
+
+.notice-row > button {
+    min-height: 38px;
+}
+
+.notice.error {
+    color: var(--danger);
+    border-color: #efc4bd;
+    background: var(--danger-soft);
+}
+
+.notice.success {
+    color: var(--success);
+    border-color: #b9dfca;
+    background: var(--success-soft);
+}
+
+.work-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 14px;
+    align-items: stretch;
+}
+
+.file-panel,
+.settings-panel {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.settings-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 68px;
+    padding: 15px 17px;
+    border-bottom: 1px solid var(--line);
+}
+
+.panel-head h3 {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.panel-head p {
+    margin-top: 3px;
+}
+
+.tree-toolbar {
+    display: grid;
+    grid-template-columns: auto minmax(180px, 280px);
+    gap: 14px;
+    align-items: center;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-soft);
+}
+
+.tree-toolbar.is-search-disabled {
+    grid-template-columns: auto;
+}
+
+.check-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.check-control input,
+.tree-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+}
+
+.search-field input,
+.field select,
+.field input,
+.directory-control select {
+    width: 100%;
+    min-height: 39px;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    outline: none;
+    color: var(--ink);
+    background: #fff;
+}
+
+.search-field input,
+.field input,
+.field select,
+.directory-control select {
+    padding: 0 10px;
+}
+
+.search-field input {
+    min-height: 36px;
+}
+
+.search-field input:focus,
+.field select:focus,
+.field input:focus,
+.directory-control select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(39, 134, 220, 0.14);
+}
+
+.file-tree {
+    height: 400px;
+    overflow: auto;
+    padding: 8px 10px 14px;
+}
+
+.tree-empty {
+    display: grid;
+    place-items: center;
+    min-height: 210px;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+}
+
+.tree-row {
+    display: grid;
+    grid-template-columns: 26px 20px 20px minmax(0, 1fr) auto;
+    gap: 5px;
+    align-items: center;
+    min-height: 34px;
+    padding: 2px 7px 2px calc(7px + var(--tree-depth, 0) * 18px);
+    border-radius: 5px;
+}
+
+.tree-row:hover {
+    background: var(--accent-soft);
+}
+
+.tree-toggle {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    color: var(--muted);
+    background: transparent;
+    font-size: 15px;
+}
+
+.tree-toggle.is-open {
+    transform: rotate(90deg);
+}
+
+.tree-toggle.is-placeholder {
+    visibility: hidden;
+}
+
+.tree-icon {
+    position: relative;
+    width: 15px;
+    height: 13px;
+    border: 1.5px solid currentColor;
+    border-radius: 2px;
+    color: #7a8b91;
+}
+
+.tree-icon.folder {
+    color: var(--warning);
+    background: #fff7de;
+}
+
+.tree-icon.file {
+    width: 12px;
+    height: 15px;
+    color: var(--accent-dark);
+    background: #f2fbfa;
+}
+
+.tree-label {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ink);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+.tree-size {
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 14px;
+    padding: 14px;
+}
+
+.field {
+    display: grid;
+    gap: 7px;
+}
+
+.field > span {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.password-combobox {
+    position: relative;
+}
+
+.password-combobox input {
+    width: 100%;
+    min-height: 39px;
+    padding: 0 44px 0 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    outline: none;
+    color: var(--ink);
+    background: #fff;
+}
+
+.password-combobox input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(39, 134, 220, 0.14);
+}
+
+.password-preset-toggle {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 38px;
+    height: 37px;
+    padding: 0;
+    border: 0;
+    border-left: 1px solid var(--line);
+    border-radius: 0 5px 5px 0;
+    color: var(--muted);
+    background: var(--surface-soft);
+    font-size: 15px;
+}
+
+.password-preset-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    left: 0;
+    z-index: 5;
+    display: grid;
+    max-height: 190px;
+    padding: 5px;
+    overflow: auto;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: 0 12px 28px rgba(31, 48, 55, 0.16);
+}
+
+.password-preset-list[hidden] {
+    display: none;
+}
+
+.password-preset-option {
+    min-height: 34px;
+    padding: 0 9px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 4px;
+    color: var(--ink);
+    background: transparent;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.password-preset-option:hover,
+.password-preset-option:focus-visible {
+    background: var(--accent-soft);
+}
+
+.password-preset-empty {
+    padding: 9px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.password-manager-field {
+    min-width: 0;
+}
+
+.password-manager-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    min-width: 0;
+    padding: 9px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface-soft);
+}
+
+.password-manager-summary > div {
+    min-width: 0;
+}
+
+.password-manager-summary strong,
+.password-manager-summary small {
+    display: block;
+}
+
+.password-manager-summary strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.password-manager-summary small {
+    margin-top: 4px;
+}
+
+.code-page-field {
+    margin-top: 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+}
+
+.volume-details[open] + .code-page-field {
+    margin-top: auto;
+}
+
+#openPasswordManagerBtn {
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 12px;
+}
+
+.settings-panel select {
+    min-height: 36px;
+    font-size: 12px;
+}
+
+.settings-panel .directory-picker-summary .secondary-button {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 12px;
+}
+
+.settings-panel .output-preview {
+    padding: 8px 9px;
+}
+
+.show-password-control {
+    justify-self: start;
+}
+
+.text-danger-button {
+    flex: 0 0 auto;
+    min-height: 28px;
+    padding: 0;
+    border: 0;
+    color: var(--danger);
+    background: transparent;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.text-danger-button:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+.directory-picker-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 7px;
+    align-items: center;
+    min-width: 0;
+    padding: 8px 9px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface-soft);
+}
+
+.directory-picker-summary > div {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ink);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.output-preview,
+.result-path {
+    padding: 10px 11px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow-wrap: anywhere;
+    color: var(--ink);
+    background: var(--surface-soft);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.volume-details {
+    border-top: 1px solid var(--line);
+    padding-top: 13px;
+}
+
+.volume-details summary {
+    cursor: pointer;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.archive-metrics dd,
+.status-badge,
+#progressText,
+#volumeCount,
+.tree-size,
+.volume-item span:last-child {
+    font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: "lnum" 1, "tnum" 1;
+}
+
+.volume-list {
+    display: grid;
+    gap: 6px;
+    max-height: 145px;
+    margin-top: 9px;
+    overflow: auto;
+}
+
+.volume-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 7px 8px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    font-size: 11px;
+}
+
+.volume-item span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.volume-item span:last-child {
+    color: var(--muted);
+}
+
+.job-bar {
+    position: sticky;
+    bottom: 12px;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 20px;
+    align-items: center;
+    margin-top: 14px;
+    padding: 15px 17px;
+}
+
+.job-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.progress-track {
+    height: 9px;
+    overflow: hidden;
+    border-radius: 5px;
+    background: #dbe4e6;
+}
+
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.2s ease;
+}
+
+.job-copy p {
+    margin-top: 7px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.job-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button,
+.icon-text-button,
+.dialog-close {
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.primary-button {
+    border: 1px solid var(--accent);
+    color: #fff;
+    background: var(--accent);
+}
+
+.primary-button:hover:not(:disabled) {
+    background: var(--accent-dark);
+}
+
+.secondary-button,
+.icon-text-button {
+    border: 1px solid var(--line-strong);
+    color: var(--ink);
+    background: #fff;
+}
+
+.icon-text-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 34px;
+    font-size: 12px;
+}
+
+.danger-button {
+    border: 1px solid #e4a79e;
+    color: var(--danger);
+    background: var(--danger-soft);
+}
+
+.dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(21, 32, 36, 0.52);
+}
+
+.dialog {
+    width: min(520px, 100%);
+    max-height: min(680px, calc(100vh - 40px));
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 24px 70px rgba(18, 31, 36, 0.24);
+}
+
+.dialog-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 17px;
+    border-bottom: 1px solid var(--line);
+}
+
+.dialog-head h3 {
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.dialog-head p {
+    margin-top: 5px;
+    overflow-wrap: anywhere;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.dialog-close {
+    width: 34px;
+    min-height: 34px;
+    padding: 0;
+    border: 0;
+    color: var(--muted);
+    background: var(--surface-soft);
+    font-size: 22px;
+}
+
+.directory-toolbar,
+.dialog-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 9px;
+    padding: 12px 17px;
+    border-bottom: 1px solid var(--line);
+}
+
+.directory-dialog {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    width: min(640px, 100%);
+}
+
+.directory-toolbar > div {
+    display: flex;
+    gap: 8px;
+}
+
+.directory-tree {
+    min-height: 210px;
+    max-height: 390px;
+    overflow: auto;
+    padding: 8px;
+}
+
+.directory-node-row {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 7px;
+    align-items: center;
+    width: 100%;
+    min-height: 38px;
+    padding: 0 8px 0 calc(8px + var(--directory-depth, 0) * 18px);
+    border: 0;
+    border-radius: 5px;
+    color: var(--ink);
+    background: transparent;
+    text-align: left;
+}
+
+.directory-node-row:hover,
+.directory-node-row.is-selected {
+    background: var(--accent-soft);
+}
+
+.directory-node-row.is-selected {
+    color: var(--accent-dark);
+}
+
+.directory-node-toggle {
+    width: 28px;
+    min-height: 28px;
+    padding: 0;
+    border: 0;
+    color: var(--muted);
+    background: transparent;
+}
+
+.directory-node-toggle.is-open {
+    transform: rotate(90deg);
+}
+
+.directory-node-label {
+    min-width: 0;
+    min-height: 30px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    color: inherit;
+    background: transparent;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.directory-node-row small {
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.directory-tree-state {
+    padding: 7px 8px 7px calc(36px + var(--directory-depth, 0) * 18px);
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.directory-dialog-actions {
+    border-top: 1px solid var(--line);
+    border-bottom: 0;
+}
+
+.create-directory-dialog {
+    width: min(430px, 100%);
+}
+
+.create-directory-body {
+    padding: 17px;
+}
+
+.result-dialog {
+    width: min(470px, 100%);
+}
+
+.diagnostics-dialog {
+    width: min(760px, 100%);
+}
+
+.password-prompt-dialog {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    width: min(480px, 100%);
+}
+
+.password-prompt-body {
+    display: grid;
+    gap: 20px;
+    min-height: 0;
+    padding: 17px;
+    overflow: auto;
+}
+
+.password-prompt-actions {
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--line);
+    border-bottom: 0;
+}
+
+.password-prompt-actions > div {
+    display: flex;
+    gap: 9px;
+}
+
+.password-manager-dialog {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    width: min(700px, 100%);
+}
+
+.password-manager-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 104px;
+    gap: 12px;
+    min-height: 0;
+    padding: 17px;
+}
+
+.password-record-table {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+}
+
+.password-record-head,
+.password-record-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.password-record-head {
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-soft);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.password-record-head span {
+    padding: 8px 10px;
+}
+
+.password-record-head span + span,
+.password-record-row span + span {
+    border-left: 1px solid var(--line);
+}
+
+.password-record-list {
+    min-height: 250px;
+    max-height: 380px;
+    overflow: auto;
+    background: #fff;
+}
+
+.password-record-row {
+    width: 100%;
+    min-height: 36px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    color: var(--ink);
+    background: transparent;
+    text-align: left;
+}
+
+.password-record-row:last-child {
+    border-bottom: 0;
+}
+
+.password-record-row:hover,
+.password-record-row.is-selected {
+    background: var(--accent-soft);
+}
+
+.password-record-row span {
+    min-width: 0;
+    padding: 8px 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.password-manager-controls {
+    display: grid;
+    align-content: start;
+    gap: 9px;
+}
+
+.password-manager-note {
+    padding: 0 17px 14px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.password-manager-actions {
+    justify-content: flex-end;
+    border-top: 1px solid var(--line);
+    border-bottom: 0;
+}
+
+.password-record-dialog {
+    width: min(470px, 100%);
+}
+
+.password-record-body {
+    display: grid;
+    gap: 16px;
+    padding: 17px;
+}
+
+.password-record-body .field input {
+    width: 100%;
+    min-height: 39px;
+    padding: 0 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    outline: none;
+    color: var(--ink);
+    background: #fff;
+}
+
+.password-record-body .field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(39, 134, 220, 0.14);
+}
+
+.password-record-dialog-actions {
+    justify-content: flex-end;
+    border-top: 1px solid var(--line);
+    border-bottom: 0;
+}
+
+.nested-dialog-backdrop {
+    z-index: 60;
+}
+
+.dialog-inline-error {
+    padding: 9px 10px;
+    border: 1px solid #efc4bd;
+    border-radius: 6px;
+    color: var(--danger);
+    background: var(--danger-soft);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.permission-dialog-actions {
+    justify-content: flex-end;
+    border-top: 1px solid var(--line);
+    border-bottom: 0;
+}
+
+.permission-dialog {
+    width: min(570px, 100%);
+}
+
+.permission-dialog-body {
+    display: grid;
+    gap: 12px;
+    padding: 17px;
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.permission-dialog-body ol {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+    padding-left: 22px;
+}
+
+.diagnostics-content {
+    min-height: 260px;
+    max-height: min(520px, calc(100vh - 190px));
+    margin: 0;
+    padding: 16px 17px;
+    overflow: auto;
+    color: #243237;
+    background: #f4f7f7;
+    font: 12px/1.55 Consolas, "SFMono-Regular", monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.diagnostics-actions {
+    justify-content: flex-end;
+    border-top: 1px solid var(--line);
+    border-bottom: 0;
+}
+
+.result-path {
+    margin: 17px;
+}
+
+.result-dialog .dialog-actions {
+    justify-content: flex-end;
+    border-top: 1px solid var(--line);
+    border-bottom: 0;
+}
+
+@media (max-width: 860px) {
+    .work-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-panel {
+        order: -1;
+    }
+
+    .file-tree {
+        height: 380px;
+    }
+}
+
+@media (max-width: 680px) {
+    .app-shell {
+        padding: 13px;
+    }
+
+    .app-header,
+    .archive-summary,
+    .job-bar {
+        grid-template-columns: 1fr;
+    }
+
+    .app-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .status-badge {
+        width: 100%;
+    }
+
+    .archive-summary {
+        display: grid;
+        gap: 13px;
+    }
+
+    .archive-type {
+        width: 56px;
+        height: 56px;
+    }
+
+    .archive-metrics {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .archive-metrics div {
+        min-width: 0;
+        border-top: 1px solid var(--line);
+        border-left: 0;
+    }
+
+    .tree-toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    .tree-row {
+        grid-template-columns: 25px 19px 18px minmax(0, 1fr);
+    }
+
+    .tree-size {
+        display: none;
+    }
+
+    .job-bar {
+        position: static;
+        gap: 12px;
+    }
+
+    .job-actions,
+    .job-actions button {
+        width: 100%;
+    }
+
+    .notice-row {
+        flex-direction: column;
+    }
+
+    .notice-row > button {
+        width: 100%;
+    }
+
+    .directory-control {
+        grid-template-columns: 1fr;
+    }
+
+    .password-manager-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .password-manager-summary .secondary-button {
+        width: 100%;
+    }
+
+    .password-prompt-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .password-prompt-actions > button {
+        width: 100%;
+    }
+
+    .password-prompt-actions > div {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .password-manager-body {
+        grid-template-columns: 1fr;
+    }
+
+    .password-manager-controls {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .password-record-list {
+        min-height: 210px;
+    }
+}

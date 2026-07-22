@@ -1,0 +1,23 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
+. "${SCRIPT_DIR}/sync_authorized_paths"
+
+case $1 in
+start)
+    # 启动应用的命令，成功返回 0，失败返回 1
+    sync_authorized_paths || true
+    exit 0
+    ;;
+stop)
+    # 停止应用的命令，成功返回 0，失败返回 1
+    exit 0
+    ;;
+status)
+    # 检查应用运行状态，运行中返回 0，未运行返回 3
+    exit 0
+    ;;
+*)
+    exit 1
+    ;;
+esac

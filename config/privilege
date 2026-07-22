@@ -1,0 +1,7 @@
+{
+    "defaults": {
+        "run-as": "package"
+    },
+    "username": "fn_smart_zip",
+    "groupname": "fn_smart_zip"
+}

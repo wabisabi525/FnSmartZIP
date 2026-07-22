@@ -1,0 +1,12 @@
+{
+  "name": "fnsmartzip",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "test:release": "node scripts/audit-fpk.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

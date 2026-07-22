@@ -1,0 +1,31 @@
+#!/bin/bash
+
+sync_authorized_paths() {
+    if [ -z "${TRIM_PKGVAR:-}" ]; then
+        return 0
+    fi
+
+    local app_dest="${TRIM_APPDEST:-/var/apps/FnSmartZIP/target}"
+    local sync_script="${app_dest}/server/sync-authorized-paths.js"
+    local node_bin="/var/apps/nodejs_v22/target/bin/node"
+    local log_dir="${TRIM_PKGVAR}/logs"
+    local log_file="${log_dir}/authorization-sync.log"
+
+    if [ ! -x "$node_bin" ]; then
+        node_bin="$(command -v node 2>/dev/null || true)"
+    fi
+    if [ -z "$node_bin" ] || [ ! -f "$sync_script" ]; then
+        return 0
+    fi
+
+    umask 077
+    mkdir -p "$log_dir" 2>/dev/null || return 1
+    "$node_bin" "$sync_script" >>"$log_file" 2>&1 || return 1
+
+    if [ -f "${TRIM_PKGVAR}/authorized-paths.json" ]; then
+        chown fn_smart_zip:fn_smart_zip \
+            "${TRIM_PKGVAR}/authorized-paths.json" 2>/dev/null || true
+        chmod 600 "${TRIM_PKGVAR}/authorized-paths.json" 2>/dev/null || true
+    fi
+    return 0
+}

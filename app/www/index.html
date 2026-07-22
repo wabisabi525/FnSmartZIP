@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FnSmartZIP - 飞牛智能分卷解压</title>
+    <link rel="stylesheet" href="./index.cgi/css/style.css">
+</head>
+<body>
+    <main class="app-shell">
+        <div class="workspace">
+            <header class="app-header">
+                <div class="brand">
+                    <img class="brand-icon" src="./index.cgi/images/icon_64.png?v=1.0.0" alt="">
+                    <div>
+                        <h1>FnSmartZIP</h1>
+                        <p>飞牛智能分卷解压</p>
+                    </div>
+                </div>
+                <div id="toolStatus" class="status-badge">正在检测引擎</div>
+            </header>
+
+            <section class="archive-summary" aria-labelledby="archiveTitle">
+                <div id="archiveType" class="archive-type" aria-hidden="true">ARC</div>
+                <div class="archive-copy">
+                    <p class="eyebrow">当前压缩包</p>
+                    <h2 id="archiveTitle">等待 fnOS 传入文件</h2>
+                    <p id="filePath" class="path-text">请从文件管理器右键打开受支持的压缩包或首卷文件。</p>
+                    <div id="warningList" class="warning-list" hidden></div>
+                </div>
+                <dl class="archive-metrics">
+                    <div>
+                        <dt>分卷</dt>
+                        <dd id="partCount">-</dd>
+                    </div>
+                    <div>
+                        <dt>文件</dt>
+                        <dd id="fileCount">-</dd>
+                    </div>
+                    <div>
+                        <dt>总大小</dt>
+                        <dd id="totalSize">-</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <div class="notice-row">
+                <div id="notice" class="notice" role="status">正在读取压缩包信息...</div>
+                <button id="diagnosticsBtn" class="secondary-button" type="button" hidden>查看诊断</button>
+            </div>
+
+            <section class="work-grid">
+                <section class="file-panel" aria-labelledby="fileTreeTitle">
+                    <div class="panel-head">
+                        <div>
+                            <h3 id="fileTreeTitle">压缩包内容</h3>
+                            <p id="selectionSummary">等待预览</p>
+                        </div>
+                        <button id="refreshPreviewBtn" class="icon-text-button" type="button">
+                            <span aria-hidden="true">↻</span>
+                            重新预览
+                        </button>
+                    </div>
+
+                    <div class="tree-toolbar">
+                        <label class="check-control">
+                            <input id="selectAllInput" type="checkbox" checked disabled>
+                            <span>全选</span>
+                        </label>
+                        <label class="search-field">
+                            <span class="sr-only">搜索文件</span>
+                            <input id="treeSearchInput" type="search" placeholder="搜索文件" disabled>
+                        </label>
+                    </div>
+
+                    <div id="fileTree" class="file-tree" aria-label="压缩包文件树">
+                        <div class="tree-empty">尚未载入压缩包目录</div>
+                    </div>
+                </section>
+
+                <aside class="settings-panel" aria-labelledby="settingsTitle">
+                    <div class="panel-head">
+                        <div>
+                            <h3 id="settingsTitle">解压设置</h3>
+                            <p>选项只影响当前任务</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-form">
+                        <div class="field password-manager-field">
+                            <span>密码管理器</span>
+                            <div class="password-manager-summary">
+                                <div>
+                                    <strong id="passwordManagerStatus">未检测到加密</strong>
+                                    <small>选择、修改或保存解压密码</small>
+                                </div>
+                                <button id="openPasswordManagerBtn" class="secondary-button" type="button">
+                                    打开密码管理器
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="field directory-picker-field">
+                            <span>选择解压路径</span>
+                            <div class="directory-picker-summary">
+                                <div id="selectedDirectoryPath" title="-">-</div>
+                                <button id="openDirectoryPickerBtn" class="secondary-button" type="button" disabled>选择</button>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <span>输出位置预览</span>
+                            <div id="outputPreview" class="output-preview">-</div>
+                            <small>解压到压缩包同名目录；若已存在则自动创建新名称。</small>
+                        </div>
+
+                        <details class="volume-details">
+                            <summary>已识别分卷 <span id="volumeCount">0</span></summary>
+                            <div id="volumeList" class="volume-list"></div>
+                        </details>
+
+                        <label class="field code-page-field">
+                            <span>文件名代码页</span>
+                            <select id="codePageSelect">
+                                <option value="auto">默认（自动识别）</option>
+                                <option value="utf8">UTF-8</option>
+                                <option value="gbk">简体中文（GBK / 936）</option>
+                                <option value="big5">繁体中文（Big5 / 950）</option>
+                                <option value="shift_jis">日文（Shift-JIS / 932）</option>
+                                <option value="korean">韩文（949）</option>
+                            </select>
+                        </label>
+                    </div>
+                </aside>
+            </section>
+
+            <section class="job-bar" aria-label="解压任务">
+                <div class="job-copy">
+                    <div class="job-line">
+                        <strong id="jobState">准备就绪</strong>
+                        <span id="progressText">0%</span>
+                    </div>
+                    <div class="progress-track" aria-label="解压进度">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                    <p id="currentFile">选择文件和目标目录后即可开始。</p>
+                </div>
+                <div class="job-actions">
+                    <button id="cancelBtn" class="danger-button" type="button" hidden>停止解压</button>
+                    <button id="extractBtn" class="primary-button" type="button" disabled>开始解压</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div id="directoryDialog" class="dialog-backdrop" hidden>
+        <div class="dialog directory-dialog" role="dialog" aria-modal="true" aria-labelledby="directoryDialogTitle">
+            <div class="dialog-head">
+                <div>
+                    <h3 id="directoryDialogTitle">选择解压路径</h3>
+                    <p id="directoryDialogPath">-</p>
+                </div>
+                <button id="closeDirectoryDialogBtn" class="dialog-close" type="button" aria-label="关闭">×</button>
+            </div>
+            <div class="directory-toolbar">
+                <button id="directoryUpBtn" class="secondary-button" type="button">上一级</button>
+                <div>
+                    <button id="refreshDirectoryRootsBtn" class="secondary-button" type="button">刷新</button>
+                    <button id="createDirectoryBtn" class="secondary-button" type="button">新建文件夹</button>
+                </div>
+            </div>
+            <div id="directoryTree" class="directory-tree" role="tree"></div>
+            <div class="dialog-actions directory-dialog-actions">
+                <button id="cancelDirectoryBtn" class="secondary-button" type="button">取消</button>
+                <button id="chooseDirectoryBtn" class="primary-button" type="button">选择当前目录</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="createDirectoryDialog" class="dialog-backdrop nested-dialog-backdrop" hidden>
+        <div class="dialog create-directory-dialog" role="dialog" aria-modal="true" aria-labelledby="createDirectoryDialogTitle">
+            <div class="dialog-head">
+                <div>
+                    <h3 id="createDirectoryDialogTitle">新建文件夹</h3>
+                    <p>在当前选择的目录中创建文件夹。</p>
+                </div>
+            </div>
+            <div class="create-directory-body">
+                <label class="field">
+                    <span>文件夹名称</span>
+                    <input id="createDirectoryNameInput" type="text" maxlength="128" autocomplete="off">
+                </label>
+                <div id="createDirectoryError" class="dialog-inline-error" role="alert" hidden></div>
+            </div>
+            <div class="dialog-actions">
+                <button id="cancelCreateDirectoryBtn" class="secondary-button" type="button">取消</button>
+                <button id="confirmCreateDirectoryBtn" class="primary-button" type="button">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="passwordPromptDialog" class="dialog-backdrop" hidden>
+        <div class="dialog password-prompt-dialog" role="dialog" aria-modal="true" aria-labelledby="passwordPromptDialogTitle">
+            <div class="dialog-head">
+                <div>
+                    <h3 id="passwordPromptDialogTitle">输入密码</h3>
+                    <p>输入加密文件的密码，或从已保存密码中选择。</p>
+                </div>
+                <button id="closePasswordPromptDialogBtn" class="dialog-close" type="button" aria-label="关闭">×</button>
+            </div>
+            <div class="password-prompt-body">
+                <div class="field">
+                    <span>输入密码</span>
+                    <div class="password-combobox">
+                        <input id="passwordInput" type="password" autocomplete="current-password" placeholder="输入解压密码">
+                        <button id="passwordPresetToggleBtn" class="password-preset-toggle" type="button" aria-label="展开已保存密码" aria-expanded="false">▾</button>
+                        <div id="passwordPresetList" class="password-preset-list" role="listbox" hidden></div>
+                    </div>
+                </div>
+                <label class="check-control show-password-control">
+                    <input id="showPasswordInput" type="checkbox">
+                    <span>显示密码</span>
+                </label>
+                <div id="passwordPromptError" class="dialog-inline-error" role="alert" hidden></div>
+            </div>
+            <div class="dialog-actions password-prompt-actions">
+                <button id="openPasswordManagerFromPromptBtn" class="secondary-button" type="button">密码管理器...</button>
+                <div>
+                    <button id="cancelPasswordBtn" class="secondary-button" type="button">取消</button>
+                    <button id="verifyPasswordBtn" class="primary-button" type="button">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="passwordManagerDialog" class="dialog-backdrop" hidden>
+        <div class="dialog password-manager-dialog" role="dialog" aria-modal="true" aria-labelledby="passwordManagerDialogTitle">
+            <div class="dialog-head">
+                <div>
+                    <h3 id="passwordManagerDialogTitle">密码管理器</h3>
+                    <p>管理当前浏览器中保存的解压密码。</p>
+                </div>
+                <button id="closePasswordManagerDialogBtn" class="dialog-close" type="button" aria-label="关闭">×</button>
+            </div>
+            <div class="password-manager-body">
+                <div class="password-record-table">
+                    <div class="password-record-head">
+                        <span>密码</span>
+                        <span>显示名称</span>
+                    </div>
+                    <div id="passwordRecordList" class="password-record-list" role="listbox"></div>
+                </div>
+                <div class="password-manager-controls">
+                    <button id="addPasswordBtn" class="secondary-button" type="button">添加</button>
+                    <button id="deletePasswordBtn" class="secondary-button" type="button" disabled>删除</button>
+                    <button id="editPasswordBtn" class="secondary-button" type="button" disabled>编辑</button>
+                </div>
+            </div>
+            <p class="password-manager-note">密码仅保存在当前浏览器本地，不会同步到服务器。</p>
+            <div class="dialog-actions password-manager-actions">
+                <button id="confirmPasswordManagerBtn" class="primary-button" type="button">完成</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="passwordRecordDialog" class="dialog-backdrop nested-dialog-backdrop" hidden>
+        <div class="dialog password-record-dialog" role="dialog" aria-modal="true" aria-labelledby="passwordRecordDialogTitle">
+            <div class="dialog-head">
+                <div>
+                    <h3 id="passwordRecordDialogTitle">密码信息</h3>
+                    <p>保存后可在输入密码窗口中快速选择。</p>
+                </div>
+                <button id="closePasswordRecordDialogBtn" class="dialog-close" type="button" aria-label="关闭">×</button>
+            </div>
+            <div class="password-record-body">
+                <label class="field">
+                    <span>密码</span>
+                    <input id="recordPasswordInput" type="text" autocomplete="off">
+                </label>
+                <label class="field">
+                    <span>显示名称（可选）</span>
+                    <input id="recordLabelInput" type="text" maxlength="80">
+                </label>
+                <div id="passwordRecordError" class="dialog-inline-error" role="alert" hidden></div>
+            </div>
+            <div class="dialog-actions password-record-dialog-actions">
+                <button id="cancelPasswordRecordBtn" class="secondary-button" type="button">取消</button>
+                <button id="confirmPasswordRecordBtn" class="primary-button" type="button">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="permissionDialog" class="dialog-backdrop" hidden>
+        <div class="dialog permission-dialog" role="dialog" aria-modal="true" aria-labelledby="permissionDialogTitle">
+            <div class="dialog-head">
+                <div>
+                    <h3 id="permissionDialogTitle">FnSmartZIP 无法读取此文件</h3>
+                    <p>共享目录已授权，但现有文件权限仍可能阻止应用读取。</p>
+                </div>
+                <button id="closePermissionDialogBtn" class="dialog-close" type="button" aria-label="关闭">×</button>
+            </div>
+            <div class="permission-dialog-body">
+                <p id="permissionDialogMessage"></p>
+                <ol>
+                    <li>在 fnOS 文件管理器中右键此文件的上一级文件夹。</li>
+                    <li>依次选择“详细信息”→“权限”→“新增”→“应用”。</li>
+                    <li>添加 FnSmartZIP，并授予读取权限。</li>
+                </ol>
+                <p>如果还要把文件解压到该目录，请同时授予写入权限。保存后返回此窗口重新检测。</p>
+            </div>
+            <div class="dialog-actions permission-dialog-actions">
+                <button id="permissionDiagnosticsBtn" class="secondary-button" type="button">查看诊断</button>
+                <button id="retryPermissionBtn" class="primary-button" type="button">重新检测</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultDialog" class="dialog-backdrop" hidden>
+        <div class="dialog result-dialog" role="dialog" aria-modal="true" aria-labelledby="resultDialogTitle">
+            <div class="dialog-head">
+                <div>
+                    <h3 id="resultDialogTitle">解压完成</h3>
+                    <p>文件已写入以下目录</p>
+                </div>
+                <button id="closeResultDialogBtn" class="dialog-close" type="button" aria-label="关闭">×</button>
+            </div>
+            <div id="resultOutputDir" class="result-path">-</div>
+            <div class="dialog-actions">
+                <button id="confirmResultDialogBtn" class="primary-button" type="button">完成</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="diagnosticsDialog" class="dialog-backdrop" hidden>
+        <div class="dialog diagnostics-dialog" role="dialog" aria-modal="true" aria-labelledby="diagnosticsDialogTitle">
+            <div class="dialog-head">
+                <div>
+                    <h3 id="diagnosticsDialogTitle">诊断信息</h3>
+                    <p>报告包含路径权限、应用身份、引擎状态和脱敏日志。</p>
+                </div>
+                <button id="closeDiagnosticsDialogBtn" class="dialog-close" type="button" aria-label="关闭">×</button>
+            </div>
+            <pre id="diagnosticsContent" class="diagnostics-content">正在生成诊断报告...</pre>
+            <div class="dialog-actions diagnostics-actions">
+                <button id="copyDiagnosticsBtn" class="secondary-button" type="button">复制</button>
+                <button id="downloadDiagnosticsBtn" class="primary-button" type="button">下载 JSON</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./index.cgi/js/password-store.js"></script>
+    <script src="./index.cgi/js/tree.js"></script>
+    <script src="./index.cgi/js/main.js"></script>
+</body>
+</html>

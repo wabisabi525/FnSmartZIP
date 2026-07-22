@@ -1,0 +1,9 @@
+#!/bin/bash
+
+### This script is called after the user change environment variables in application setting page.
+
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
+. "${SCRIPT_DIR}/sync_authorized_paths"
+sync_authorized_paths || true
+
+exit 0

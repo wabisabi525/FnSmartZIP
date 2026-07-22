@@ -1,0 +1,35 @@
+{
+    ".url": {
+        "FnSmartZIP.Application": {
+            "title": "使用 FnSmartZIP 打开",
+            "icon": "images/icon_{0}.png",
+            "type": "iframe",
+            "protocol": "http",
+            "url": "/cgi/ThirdParty/FnSmartZIP/index.cgi",
+            "allUsers": false,
+            "fileTypes": [
+                "001",
+                "7z",
+                "zip",
+                "rar",
+                "tar",
+                "tgz",
+                "tbz",
+                "tbz2",
+                "txz",
+                "gz",
+                "bz2",
+                "xz",
+                "zst",
+                "zstd",
+                "tzst",
+                "cab",
+                "iso",
+                "arj",
+                "lzh",
+                "lha"
+            ],
+            "noDisplay": true
+        }
+    }
+}
