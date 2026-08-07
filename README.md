@@ -1,4 +1,4 @@
-# FnSmartZIP 1.0.0 飞牛智能分卷解压
+# FnSmartZIP 飞牛智能分卷解压
 
 FnSmartZIP 是一款用于 fnOS的解压应用。安装后右键压缩包或分卷首卷，即可开始解压。
 
