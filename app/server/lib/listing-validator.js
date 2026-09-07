@@ -6,16 +6,50 @@ const { spawn } = require("node:child_process");
 const {
   createTechnicalListValidator,
 } = require("./preview");
+const {
+  hasPasswordSwitch,
+} = require("./sevenzip");
+
+function writePasswordStdin(child, password) {
+  if (!child?.stdin) {
+    return;
+  }
+  if (password) {
+    child.stdin.write(String(password));
+    if (!String(password).endsWith("\n")) {
+      child.stdin.write("\n");
+    }
+  }
+  child.stdin.end();
+}
+
+function readStdin() {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    process.stdin.on("data", (chunk) => chunks.push(chunk));
+    process.stdin.on("end", () => resolve(Buffer.concat(chunks)));
+    process.stdin.on("error", reject);
+  });
+}
 
 async function validateCommand(toolPath, cwd, args, dependencies = {}) {
   const spawnProcess = dependencies.spawnProcess || spawn;
   const child = spawnProcess(toolPath, args, {
     cwd: cwd || undefined,
+    env: {
+      ...process.env,
+      LC_ALL: "C",
+      LANG: "C",
+      ...(dependencies.env || {}),
+    },
     detached: false,
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: ["pipe", "pipe", "pipe"],
     windowsHide: true,
   });
-  const validator = createTechnicalListValidator();
+  writePasswordStdin(child, dependencies.password);
+  const validator = createTechnicalListValidator({
+    encoding: dependencies.encoding || process.env.FNSMARTZIP_LISTING_ENCODING || "utf-8",
+  });
   let stderr = "";
   let validationError = null;
   let killTimer = null;
@@ -66,7 +100,15 @@ async function validateCommand(toolPath, cwd, args, dependencies = {}) {
 
 async function main() {
   const [toolPath, cwd, ...args] = process.argv.slice(2);
-  const result = await validateCommand(toolPath, cwd, args);
+  let password = "";
+  if (hasPasswordSwitch(args)) {
+    const raw = await readStdin();
+    password = raw.toString("utf8").split(/\r?\n/, 1)[0] || "";
+  }
+  const result = await validateCommand(toolPath, cwd, args, {
+    password,
+    encoding: process.env.FNSMARTZIP_LISTING_ENCODING || "utf-8",
+  });
   process.stdout.write(JSON.stringify(result));
 }
 

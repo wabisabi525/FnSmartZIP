@@ -1,5 +1,9 @@
 "use strict";
 
+const {
+  shouldUseUtf8Console,
+} = require("./code-page");
+
 const CODE_PAGES = Object.freeze({
   auto: null,
   utf8: 65001,
@@ -17,6 +21,16 @@ function normalizeCodePage(value = "auto") {
   return { id, codePage: CODE_PAGES[id] };
 }
 
+function hasPasswordSwitch(args = []) {
+  return args.some((argument) => argument === "-p" || /^-p./s.test(argument));
+}
+
+function appendConsoleCharset(args, options) {
+  if (shouldUseUtf8Console(options.codePage)) {
+    args.push("-sccUTF-8");
+  }
+}
+
 function appendArchiveOptions(args, selection, options) {
   if (selection.type) {
     args.push(`-t${selection.type}`);
@@ -28,19 +42,21 @@ function appendArchiveOptions(args, selection, options) {
   }
 
   if (options.password) {
-    args.push(`-p${options.password}`);
+    args.push("-p");
   }
 }
 
 function buildListArgs(selection, options) {
-  const args = ["l", "-slt", "-sccUTF-8"];
+  const args = ["l", "-slt"];
+  appendConsoleCharset(args, options);
   appendArchiveOptions(args, selection, options);
   args.push(options.archivePath);
   return args;
 }
 
 function buildTestArgs(selection, options) {
-  const args = ["t", "-mmt=on", "-sccUTF-8"];
+  const args = ["t", "-mmt=on", "-bsp1"];
+  appendConsoleCharset(args, options);
   appendArchiveOptions(args, selection, options);
   args.push(options.archivePath);
   return args;
@@ -54,8 +70,8 @@ function buildExtractArgs(selection, options) {
     "-mmt=on",
     "-bsp1",
     "-bb1",
-    "-sccUTF-8",
   ];
+  appendConsoleCharset(args, options);
   appendArchiveOptions(args, selection, options);
 
   if (options.selectionFile) {
@@ -75,5 +91,6 @@ module.exports = {
   buildExtractArgs,
   buildListArgs,
   buildTestArgs,
+  hasPasswordSwitch,
   normalizeCodePage,
 };

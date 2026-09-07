@@ -176,6 +176,7 @@ async function runCli() {
       error: {
         code: error.code || "INTERNAL",
         message: error.message || "调用错误",
+        path: error.path || "",
       },
       msg: error.message || "调用错误",
       requestId: error.requestId || "",

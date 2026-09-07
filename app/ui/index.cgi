@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 脚本名称: index.cgi
-# 　　版本: 1.0.0
+# 　　版本: 1.1.0
 # 　　作者: FNOSP/xieguanru
 # 　协作者: FNOSP/MR_XIAOBO
 # 创建日期: 2025-11-18

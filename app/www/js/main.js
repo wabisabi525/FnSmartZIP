@@ -22,12 +22,14 @@
         directoryRequestId: 0,
         jobId: "",
         pollTimer: null,
+        pollInFlight: false,
         running: false,
         previewing: false,
         previewReady: false,
         previewLimited: false,
         passwordRequired: false,
         passwordVerified: true,
+        passwordVerificationDeferred: false,
         permissionError: null,
         diagnosticsReport: null,
         lastRequestId: "",
@@ -157,7 +159,10 @@
     }
 
     async function requestJson(url, options) {
-        const response = await fetch(url, options);
+        const response = await fetch(url, {
+            cache: "no-store",
+            ...(options || {}),
+        });
         const contentType = response.headers.get("content-type") || "";
         const data = contentType.includes("application/json")
             ? await response.json()
@@ -170,6 +175,7 @@
             );
             error.code = data.error?.code || `HTTP_${response.status}`;
             error.requestId = data.requestId || "";
+            error.path = data.error?.path || "";
             error.details = data.error || null;
             throw error;
         }
@@ -215,6 +221,7 @@
     }
 
     function openPermissionDialog(error) {
+        const alreadyOpen = !els.permissionDialog.hidden;
         state.permissionError = error || null;
         const deniedPath = error?.details?.path
             || error?.path
@@ -223,7 +230,13 @@
             .split("/")
             .filter(Boolean)
             .pop() || "当前文件";
-        els.permissionDialogMessage.textContent = `当前文件未授予 FnSmartZIP 读取权限：“${fileName}”。请按以下步骤为上一级文件夹添加应用权限。`;
+        const isParentDenied = error?.code === "SOURCE_PARENT_DENIED";
+        const firstMessage = isParentDenied
+            ? `无法列出文件夹“${fileName}”中的文件。请授权该文件夹读取权限后继续。`
+            : `当前文件未授予 FnSmartZIP 读取权限：“${fileName}”。请按以下步骤为上一级文件夹添加应用权限。`;
+        els.permissionDialogMessage.textContent = alreadyOpen
+            ? `重新检测后仍无法访问“${fileName}”。请在弹出的授权窗口中确认，或按下列步骤手动授权后再试。`
+            : firstMessage;
         els.permissionDialog.hidden = false;
     }
 
@@ -406,7 +419,9 @@
     function updatePasswordManagerStatus() {
         let status = "等待文件";
         if (state.info) {
-            if (state.passwordRequired && !state.passwordVerified) {
+            if (state.passwordRequired && state.passwordVerificationDeferred) {
+                status = "\u540e\u53f0\u6821\u9a8c";
+            } else if (state.passwordRequired && !state.passwordVerified) {
                 status = "待验证";
             } else if (state.passwordRequired && state.passwordVerified) {
                 status = "密码已验证";
@@ -578,8 +593,15 @@
         if (state.returnToPasswordPrompt) {
             els.passwordPromptDialog.hidden = true;
         }
-        renderSavedPasswords();
         els.passwordManagerDialog.hidden = false;
+        try {
+            renderSavedPasswords();
+        } catch (error) {
+            state.selectedManagerPasswordId = "";
+            els.passwordRecordList.replaceChildren();
+            setNotice("\u5bc6\u7801\u8bb0\u5f55\u65e0\u6cd5\u8bfb\u53d6\uff0c\u53ef\u4ee5\u91cd\u65b0\u6dfb\u52a0\u5bc6\u7801\u3002", "error");
+        }
+        window.setTimeout(() => els.addPasswordBtn.focus(), 0);
     }
 
     function closePasswordManager() {
@@ -619,6 +641,7 @@
             return;
         }
         state.passwordVerified = false;
+        state.passwordVerificationDeferred = false;
         updatePasswordManagerStatus();
         updateActionAvailability();
     }
@@ -929,6 +952,7 @@
             state.previewLimited = false;
             state.passwordRequired = false;
             state.passwordVerified = true;
+            state.passwordVerificationDeferred = false;
             els.fileTree.innerHTML = '<div class="tree-empty">正在生成文件树...</div>';
         }
         setPreviewControls(false);
@@ -963,26 +987,32 @@
             state.previewReady = true;
             state.passwordRequired = Boolean(preview.passwordRequired);
             state.passwordVerified = preview.passwordVerified !== false;
+            state.passwordVerificationDeferred = Boolean(preview.passwordVerificationDeferred);
             els.fileCount.textContent = String(preview.summary?.fileCount || 0);
             els.totalSize.textContent = formatSize(preview.summary?.totalSize || 0);
             setPreviewControls(true);
             clearDiagnosticError();
-            if (state.passwordRequired && !state.passwordVerified) {
+            if (state.passwordRequired && !state.passwordVerified && !state.passwordVerificationDeferred) {
                 setNotice(
                     "检测到加密文件，请在密码管理器中验证后继续。",
                     "error",
                 );
                 openPasswordPrompt("检测到加密文件，请输入或选择密码后验证。");
             } else {
-                const passwordStored = rememberPasswordAfterSuccessfulPreview(previewRequest);
+                const passwordStored = state.passwordVerificationDeferred
+                    ? true
+                    : rememberPasswordAfterSuccessfulPreview(previewRequest);
+                const previewSuccessMessage = state.passwordVerificationDeferred
+                    ? "\u5bc6\u7801\u5c06\u5728\u89e3\u538b\u524d\u7531\u540e\u53f0\u6821\u9a8c\u3002"
+                    : (
+                        preview.summary?.encrypted
+                            ? "\u5bc6\u7801\u9a8c\u8bc1\u6210\u529f\uff0c\u53ef\u4ee5\u9009\u62e9\u6587\u4ef6\u5e76\u5f00\u59cb\u89e3\u538b\u3002"
+                            : "\u9884\u89c8\u5b8c\u6210\uff0c\u53ef\u4ee5\u9009\u62e9\u6587\u4ef6\u5e76\u5f00\u59cb\u89e3\u538b\u3002"
+                    );
                 setNotice(
                     passwordStored
-                        ? (
-                            preview.summary?.encrypted
-                                ? "密码验证成功，可以选择文件并开始解压。"
-                                : "预览完成，可以选择文件并开始解压。"
-                        )
-                        : "预览完成，但密码未能写入浏览器本地存储。",
+                        ? previewSuccessMessage
+                        : "\u9884\u89c8\u5b8c\u6210\uff0c\u4f46\u5bc6\u7801\u672a\u80fd\u5199\u5165\u6d4f\u89c8\u5668\u672c\u5730\u5b58\u50a8\u3002",
                     "success",
                 );
                 succeeded = true;
@@ -1020,12 +1050,14 @@
             } else if (error.code === "PASSWORD_REQUIRED") {
                 state.passwordRequired = true;
                 state.passwordVerified = false;
+                state.passwordVerificationDeferred = false;
                 setNotice("压缩包文件头已加密，请在密码管理器中验证。", "error");
                 recordDiagnosticError(error);
                 openPasswordPrompt("文件头已加密，请输入密码后验证并预览。");
             } else if (error.code === "PASSWORD") {
                 state.passwordRequired = true;
                 state.passwordVerified = false;
+                state.passwordVerificationDeferred = false;
                 setNotice("密码错误，请重新输入后验证。", "error");
                 recordDiagnosticError(error);
                 openPasswordPrompt("密码错误，请检查后重新验证。");
@@ -1375,13 +1407,21 @@
         if (status === "failed") {
             return "解压失败";
         }
-        return phase === "testing" ? "正在校验压缩包" : "正在解压";
+        if (phase === "validating") {
+            return "正在检查压缩包";
+        }
+        if (phase === "preparing") {
+            return "正在准备解压";
+        }
+        return "正在解压";
     }
 
     function updateActionAvailability() {
         const hasPreview = state.previewReady || state.previewLimited;
         const hasSelection = state.previewLimited || state.selectedPaths.size > 0;
-        const passwordReady = !state.passwordRequired || state.passwordVerified;
+        const passwordReady = !state.passwordRequired
+            || state.passwordVerified
+            || state.passwordVerificationDeferred;
         const ready = Boolean(
             state.info
             && state.info.tool
@@ -1395,7 +1435,7 @@
         els.cancelBtn.hidden = !state.running;
         els.refreshPreviewBtn.disabled = state.running || state.previewing || !state.info;
         els.codePageSelect.disabled = state.running || state.previewing;
-        els.openPasswordManagerBtn.disabled = state.running || state.previewing || !state.info;
+        els.openPasswordManagerBtn.disabled = state.running || state.previewing;
         els.passwordInput.disabled = state.running || state.previewing;
         els.passwordPresetToggleBtn.disabled = state.running || state.previewing;
         els.showPasswordInput.disabled = state.running || state.previewing;
@@ -1438,7 +1478,7 @@
             els.outputPreview.textContent = result.outputDir;
             setJobProgress(0, "任务已排队", "等待 7-Zip 启动...");
             clearInterval(state.pollTimer);
-            state.pollTimer = window.setInterval(pollStatus, 1000);
+            state.pollTimer = window.setInterval(pollStatus, 250);
             await pollStatus();
         } catch (error) {
             state.running = false;
@@ -1452,49 +1492,60 @@
     }
 
     async function pollStatus() {
-        if (!state.jobId) {
+        if (!state.jobId || state.pollInFlight) {
             return;
         }
+        state.pollInFlight = true;
         try {
             const job = await requestJson(apiUrl("status", {
                 jobId: state.jobId,
+                _: Date.now(),
             }));
             setJobProgress(
                 job.progress,
                 statusLabel(job.status, job.phase),
-                job.currentFile || (job.phase === "testing" ? "正在检查分卷和数据完整性..." : ""),
+                job.currentFile || (job.phase === "validating" ? "正在检查文件路径和分卷..." : ""),
             );
             if (job.status === "success") {
                 finishPolling();
-                setJobProgress(100, "解压完成", job.outputDir);
+                    setJobProgress(100, "解压完成", job.outputDir);
                 setNotice("解压任务已完成。", "success");
                 els.resultOutputDir.textContent = job.outputDir;
                 els.resultDialog.hidden = false;
             } else if (job.status === "failed") {
                 finishPolling();
-                const message = job.error?.message || "解压失败";
+                    const message = job.error?.message || "解压失败";
                 const requestSuffix = job.requestId
                     ? `（请求 ID：${job.requestId}）`
                     : "";
                 setJobProgress(job.progress, "解压失败", `${message}${requestSuffix}`);
                 setNotice(message, "error");
+                if (job.error?.code === "PASSWORD" || job.error?.code === "PASSWORD_REQUIRED") {
+                    state.passwordRequired = true;
+                    state.passwordVerified = false;
+                    state.passwordVerificationDeferred = false;
+                    openPasswordPrompt("\u5bc6\u7801\u672a\u901a\u8fc7\u540e\u53f0\u6821\u9a8c\uff0c\u8bf7\u68c0\u67e5\u540e\u91cd\u65b0\u9a8c\u8bc1\u3002");
+                }
                 if (!handlePermissionError(job.error, job.requestId)) {
                     recordDiagnosticError(job.error, job.requestId);
                 }
             } else if (job.status === "cancelled") {
                 finishPolling();
-                setJobProgress(job.progress, "已停止", "未完成的任务目录已清理。");
+                    setJobProgress(job.progress, "已停止", "未完成的任务目录已清理。");
                 setNotice("解压任务已停止。");
             }
         } catch (error) {
             setNotice(`状态查询失败：${error.message}`, "error");
             recordDiagnosticError(error);
+        } finally {
+            state.pollInFlight = false;
         }
     }
 
     function finishPolling() {
         clearInterval(state.pollTimer);
         state.pollTimer = null;
+        state.pollInFlight = false;
         state.running = false;
         state.jobId = "";
         updateActionAvailability();
@@ -1531,10 +1582,83 @@
         els.resultDialog.hidden = true;
     }
 
+    function permissionTargetPath(error) {
+        return error?.details?.path
+            || error?.path
+            || state.filePath
+            || "";
+    }
+
+    function unixParentPath(filePath) {
+        const trimmed = String(filePath || "").replace(/\/+$/, "");
+        const index = trimmed.lastIndexOf("/");
+        if (index <= 0) {
+            return "";
+        }
+        return trimmed.slice(0, index) || "/";
+    }
+
+    async function authorizeArchiveAccess(error) {
+        const targetPath = permissionTargetPath(error);
+        if (!window.fnosBridge) {
+            return { authorized: false, reason: "missing-bridge" };
+        }
+        if (!window.fnosBridge.isAvailable()) {
+            return { authorized: false, reason: "sdk-unavailable" };
+        }
+        const directory = error?.code === "SOURCE_PARENT_DENIED";
+        await window.fnosBridge.authorizeKnownPath(targetPath, { directory });
+        if (error?.code === "SOURCE_FILE_DENIED") {
+            const parentPath = unixParentPath(targetPath);
+            if (parentPath && parentPath !== targetPath) {
+                try {
+                    await window.fnosBridge.authorizeKnownPath(parentPath, {
+                        directory: true,
+                    });
+                } catch (parentError) {
+                    // A file grant may already be enough for preview.
+                }
+            }
+        }
+        return { authorized: true, reason: "ok" };
+    }
+
     async function retryPermissionAccess() {
-        closePermissionDialog();
-        setNotice("正在重新检测文件权限...");
-        await loadApp();
+        const permissionError = state.permissionError;
+        els.retryPermissionBtn.disabled = true;
+        try {
+            els.permissionDialogMessage.textContent = "正在打开授权窗口，请在弹出的窗口中确认...";
+            setNotice("正在请求文件授权...");
+            try {
+                const result = await authorizeArchiveAccess(permissionError);
+                if (result.reason === "sdk-unavailable" || result.reason === "missing-bridge") {
+                    els.permissionDialogMessage.textContent = "当前窗口无法弹出飞牛授权框。正在重新检测权限；若仍失败，请按下列步骤手动授权后再点“授权并继续”。";
+                    setNotice("当前窗口无法调用飞牛授权接口，正在重新检测权限。");
+                } else {
+                    els.permissionDialogMessage.textContent = "授权已完成，正在重新检测文件权限...";
+                }
+            } catch (error) {
+                if (error?.code === "SDK_UNAVAILABLE") {
+                    els.permissionDialogMessage.textContent = "当前窗口无法弹出飞牛授权框。正在重新检测权限；若仍失败，请按下列步骤手动授权后再点“授权并继续”。";
+                    setNotice("当前窗口无法调用飞牛授权接口，正在重新检测权限。");
+                } else if (/cancel|取消|denied/i.test(String(error?.message || error?.code || ""))) {
+                    els.permissionDialogMessage.textContent = "已取消授权。可再次点击“授权并继续”，或按下列步骤手动授权。";
+                    setNotice("已取消授权。", "error");
+                    return;
+                } else {
+                    els.permissionDialogMessage.textContent = error.message || "授权未完成，正在重新检测文件权限。";
+                    setNotice(error.message || "授权未完成，将重新检测文件权限。", "error");
+                }
+            }
+            setNotice("正在重新检测文件权限...");
+            await loadApp();
+            if (state.permissionError === permissionError) {
+                closePermissionDialog();
+                state.permissionError = null;
+            }
+        } finally {
+            els.retryPermissionBtn.disabled = false;
+        }
     }
 
     function openPermissionDiagnostics() {

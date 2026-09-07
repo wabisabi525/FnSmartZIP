@@ -2,7 +2,6 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { StringDecoder } = require("node:string_decoder");
 
 const DEFAULT_MAX_ENTRIES = 100000;
 const DEFAULT_MAX_BYTES = 64 * 1024 * 1024;
@@ -153,7 +152,8 @@ function createTechnicalListValidator(options = {}) {
   const maxLineBytes = options.maxLineBytes || 1024 * 1024;
   const maxRecordLines = options.maxRecordLines || 256;
   const maxRecordBytes = options.maxRecordBytes || 2 * 1024 * 1024;
-  const decoder = new StringDecoder("utf8");
+  const encoding = options.encoding || "utf-8";
+  const decoder = new TextDecoder(encoding, { fatal: false });
   let pending = "";
   let record = [];
   let afterSeparator = false;
@@ -212,14 +212,14 @@ function createTechnicalListValidator(options = {}) {
       const buffer = Buffer.isBuffer(chunk)
         ? chunk
         : Buffer.from(String(chunk), "utf8");
-      pending += decoder.write(buffer);
+      pending += decoder.decode(buffer, { stream: true });
       processPendingLines();
     },
     end(chunk) {
       if (chunk != null) {
         this.write(chunk);
       }
-      pending += decoder.end();
+      pending += decoder.decode();
       processPendingLines();
       if (pending) {
         processLine(pending);

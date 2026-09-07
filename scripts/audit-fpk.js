@@ -16,7 +16,7 @@ const FONT_SHA256 = "693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f997842
 const LICENSE_SHA256 = "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a";
 const packages = [
   {
-    fileName: "FnSmartZIP_1.0.0_search-fixed_x86_64.fpk",
+    fileName: "FnSmartZIP_1.2.0_search-fixed_x86_64.fpk",
     variant: "search-fixed",
     platform: "x86",
     sevenZipPath: "vendor/7zip/linux-x64/7zzs",
@@ -24,24 +24,8 @@ const packages = [
     machine: 62,
   },
   {
-    fileName: "FnSmartZIP_1.0.0_search-fixed_arm64.fpk",
+    fileName: "FnSmartZIP_1.2.0_search-fixed_arm64.fpk",
     variant: "search-fixed",
-    platform: "arm",
-    sevenZipPath: "vendor/7zip/linux-arm64/7zzs",
-    unexpectedSevenZipPath: "vendor/7zip/linux-x64/7zzs",
-    machine: 183,
-  },
-  {
-    fileName: "FnSmartZIP_1.0.0_no-search_x86_64.fpk",
-    variant: "no-search",
-    platform: "x86",
-    sevenZipPath: "vendor/7zip/linux-x64/7zzs",
-    unexpectedSevenZipPath: "vendor/7zip/linux-arm64/7zzs",
-    machine: 62,
-  },
-  {
-    fileName: "FnSmartZIP_1.0.0_no-search_arm64.fpk",
-    variant: "no-search",
     platform: "arm",
     sevenZipPath: "vendor/7zip/linux-arm64/7zzs",
     unexpectedSevenZipPath: "vendor/7zip/linux-x64/7zzs",
@@ -113,7 +97,7 @@ function auditPackage(config) {
   );
 
   const manifest = outerEntry(packagePath, "manifest").toString("utf8");
-  assert.match(manifest, /^version\s*=\s*1\.0\.0$/m);
+  assert.match(manifest, /^version\s*=\s*1\.2\.0$/m);
   assert.match(
     manifest,
     new RegExp(`^platform\\s*=\\s*${config.platform}$`, "m"),
@@ -140,6 +124,12 @@ function auditPackage(config) {
   assert.match(css, /@font-face/);
   assert.match(css, /font-family:\s*"Inter Variable"/);
   assert.match(css, /InterVariable\.woff2\?v=4\.1/);
+  assert.match(html, /授权并继续/);
+  assert.match(html, /fnos-bridge\.js/);
+  assert.match(mainJs, /authorizeKnownPath/);
+  const sevenZipJs = innerEntry(appArchive, "server/lib/sevenzip.js").toString("utf8");
+  assert.match(sevenZipJs, /args\.push\("-p"\)/);
+  assert.doesNotMatch(sevenZipJs, /-p\$\{/);
   if (config.variant === "search-fixed") {
     assert.match(html, /id="treeSearchInput"/);
     assert.match(mainJs, /createSearchScheduler\(\{\s*delay:\s*180/);

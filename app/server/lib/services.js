@@ -40,7 +40,6 @@ const {
 const {
   buildExtractArgs,
   buildListArgs,
-  buildTestArgs,
 } = require("./sevenzip");
 const {
   fingerprintFiles,
@@ -117,6 +116,8 @@ function createServices(options = {}) {
       }), {
         cwd: archive.directory,
         maxBuffer: 64 * 1024 * 1024,
+        password: input.password || "",
+        codePage: input.codePage || "auto",
       });
       const outerPreview = parseTechnicalList(outerList.stdout);
       const nestedSize = outerPreview.summary.totalSize;
@@ -141,6 +142,8 @@ function createServices(options = {}) {
         codePage: input.codePage || "auto",
       }), {
         cwd: archive.directory,
+        password: input.password || "",
+        codePage: input.codePage || "auto",
       });
       const innerPath = findNestedTar(preparationDir);
       return callback({
@@ -164,6 +167,8 @@ function createServices(options = {}) {
       });
       let validation = validateListing(listingArchive.tool, args, {
         cwd: listingArchive.directory,
+        password: input.password || "",
+        codePage: input.codePage || "auto",
       });
       if (!effectiveSelection.format && validation.format) {
         effectiveSelection = {
@@ -178,6 +183,8 @@ function createServices(options = {}) {
           });
           validation = validateListing(listingArchive.tool, args, {
             cwd: listingArchive.directory,
+            password: input.password || "",
+            codePage: input.codePage || "auto",
           });
         }
       }
@@ -215,25 +222,47 @@ function createServices(options = {}) {
       error.code = "MISSING_VOLUME";
       throw error;
     }
-    const args = buildListArgs(archive.selection, {
-      archivePath: archive.filePath,
-      password: input.password || "",
-      codePage: input.codePage || "auto",
-    });
     return withPreparedArchive(archive, input, (listingArchive) => {
-      let result = runSync(listingArchive.tool, buildListArgs(
-        listingArchive.selection,
-        {
+      const list = (password, selection = listingArchive.selection) => runSync(
+        listingArchive.tool,
+        buildListArgs(selection, {
           archivePath: listingArchive.filePath,
-          password: input.password || "",
+          password,
+          codePage: input.codePage || "auto",
+        }),
+        {
+          cwd: listingArchive.directory,
+          maxBuffer: 64 * 1024 * 1024,
+          timeout: 25 * 1000,
+          phase: "preview",
+          password,
+          passwordProvided: Boolean(password),
           codePage: input.codePage || "auto",
         },
-      ), {
-        cwd: listingArchive.directory,
-        maxBuffer: 64 * 1024 * 1024,
-        phase: "preview",
-        passwordProvided: Boolean(input.password),
-      });
+      );
+
+      let result;
+      let passwordVerified = !input.password;
+      let passwordVerificationDeferred = false;
+      if (input.password) {
+        // Listing is deliberately short; the Worker performs the full data test.
+        try {
+          list("");
+          passwordVerificationDeferred = true;
+        } catch (error) {
+          if (
+            error.code !== "PASSWORD_REQUIRED"
+            && error.code !== "PREVIEW_INTERRUPTED"
+          ) {
+            throw error;
+          }
+        }
+        result = list(input.password);
+        passwordVerified = !passwordVerificationDeferred;
+      } else {
+        result = list("");
+      }
+
       let effectiveSelection = listingArchive.selection;
       let detectedFormat = detectTechnicalListFormat(result.stdout);
       if (!effectiveSelection.format && detectedFormat) {
@@ -242,31 +271,18 @@ function createServices(options = {}) {
           format: detectedFormat,
         };
         if ((input.codePage || "auto") !== "auto") {
-          result = runSync(listingArchive.tool, buildListArgs(effectiveSelection, {
-            archivePath: listingArchive.filePath,
-            password: input.password || "",
-            codePage: input.codePage || "auto",
-          }), {
-            cwd: listingArchive.directory,
-            maxBuffer: 64 * 1024 * 1024,
-            phase: "preview",
-            passwordProvided: Boolean(input.password),
-          });
+          result = list(input.password || "", effectiveSelection);
           detectedFormat = detectTechnicalListFormat(result.stdout);
         }
       }
       const parsed = parseTechnicalList(result.stdout);
       const passwordRequired = Boolean(parsed.summary.encrypted);
-      if (input.password) {
-        runSync(listingArchive.tool, buildTestArgs(effectiveSelection, {
-          archivePath: listingArchive.filePath,
-          password: input.password || "",
-          codePage: input.codePage || "auto",
-        }), {
-          cwd: listingArchive.directory,
-          phase: "preview",
-          passwordProvided: true,
-        });
+      if (!passwordRequired) {
+        passwordVerified = true;
+        passwordVerificationDeferred = false;
+      } else if (!input.password) {
+        passwordVerified = false;
+        passwordVerificationDeferred = false;
       }
       return {
         ...parsed,
@@ -274,9 +290,8 @@ function createServices(options = {}) {
         type: effectiveSelection.type,
         parts: archive.parts,
         passwordRequired,
-        passwordVerified: passwordRequired
-          ? Boolean(input.password)
-          : true,
+        passwordVerified,
+        passwordVerificationDeferred,
       };
     });
   }
@@ -543,7 +558,7 @@ function createServices(options = {}) {
     }
     const report = {
       generatedAt: new Date().toISOString(),
-      version: "1.0.0",
+      version: "1.2.0",
       requestId: diagnosticRequestId,
       source: {
         path: source.path,

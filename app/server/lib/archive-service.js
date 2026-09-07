@@ -45,7 +45,10 @@ function inspectArchive(selectedPath, options = {}) {
   try {
     directoryNames = fsModule.readdirSync(directory);
   } catch (error) {
-    throw classifySourceError(error, directory, "parent");
+    if (selection.kind !== "single") {
+      throw classifySourceError(error, directory, "parent");
+    }
+    directoryNames = [path.basename(archivePath)];
   }
   const volumeInfo = collectVolumeNames(selection, directoryNames);
   const volumePaths = volumeInfo.names.map((name) => path.join(directory, name));

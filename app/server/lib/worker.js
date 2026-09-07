@@ -7,12 +7,13 @@ const {
   classifySevenZipError,
   parseProgress,
   spawnSevenZip,
+  writePasswordStdin,
 } = require("./engine");
 const { JobStore } = require("./jobs");
 const {
   buildExtractArgs,
   buildListArgs,
-  buildTestArgs,
+  hasPasswordSwitch,
 } = require("./sevenzip");
 const {
   findNestedTar,
@@ -26,19 +27,33 @@ const {
   createDiagnosticLogger,
   safeDiagnosticWrite,
 } = require("./diagnostics");
+const {
+  listingEncoding,
+  recodeExtractedTree,
+} = require("./code-page");
 
-function appendJobLog(store, jobId, chunk, phase) {
+const JOB_LOG_LIMIT = 8 * 1024;
+
+function mapPhaseProgress(phase, percent, range = {}) {
+  const normalizedPercent = Math.max(0, Math.min(100, Number(percent) || 0));
+  const start = Math.max(0, Math.min(100, Number(range.start) || 0));
+  const end = Math.max(start, Math.min(100, Number(range.end) || 100));
+  return Math.round(start + (normalizedPercent * (end - start)) / 100);
+}
+
+function appendJobLog(store, jobId, chunk, phase, progressRange = {}) {
   const text = chunk.toString("utf8");
   store.update(jobId, (job) => {
-    const log = `${job.log || ""}${text}`.slice(-65536);
+    const log = `${job.log || ""}${text}`.slice(-JOB_LOG_LIMIT);
     const progress = parseProgress(log);
     return {
       ...job,
       phase,
       log,
-      progress: phase === "testing"
-        ? Math.min(progress.percent, 5)
-        : progress.percent,
+      progress: Math.max(
+        job.progress || 0,
+        mapPhaseProgress(phase, progress.percent, progressRange),
+      ),
       currentFile: progress.currentFile || job.currentFile,
     };
   });
@@ -73,6 +88,8 @@ function defaultRunPhase(phase, context) {
     const child = spawnSevenZip(context.tool, context.args, {
       cwd: path.dirname(context.job.archivePath),
       detached: true,
+      password: context.password,
+      codePage: context.codePage,
     });
 
     registerProcessGroup(
@@ -89,7 +106,10 @@ function defaultRunPhase(phase, context) {
     let log = "";
     const append = (chunk) => {
       log = `${log}${chunk.toString("utf8")}`.slice(-65536);
-      appendJobLog(context.store, context.job.id, chunk, phase);
+      appendJobLog(context.store, context.job.id, chunk, phase, {
+        start: context.progressStart,
+        end: context.progressEnd,
+      });
     };
     child.stdout.on("data", append);
     child.stderr.on("data", append);
@@ -112,7 +132,7 @@ function defaultRunPhase(phase, context) {
       const current = context.store.read(context.job.id);
       const classified = classifySevenZipError(log, exitCode, {
         phase,
-        passwordProvided: Boolean(context.passwordProvided),
+        passwordProvided: Boolean(context.passwordProvided || context.password),
         cancelled: current?.status === "cancelling"
           || Boolean(current?.cancelRequestedAt),
       });
@@ -137,9 +157,16 @@ function defaultValidateListing(tool, args, context) {
       ...args,
     ], {
       detached: true,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ["pipe", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        LC_ALL: "C",
+        LANG: "C",
+        FNSMARTZIP_LISTING_ENCODING: context.encoding || "",
+      },
       windowsHide: true,
     });
+    writePasswordStdin(child, context.password);
     registerProcessGroup(
       context.store,
       context.job.id,
@@ -175,7 +202,7 @@ function defaultValidateListing(tool, args, context) {
         const current = context.store.read(context.job.id);
         const classified = classifySevenZipError(stderr, exitCode, {
           phase: "validating",
-          passwordProvided: args.some((argument) => /^-p./s.test(argument)),
+          passwordProvided: Boolean(context.password) || hasPasswordSwitch(args),
           cancelled: current?.status === "cancelling"
             || Boolean(current?.cancelRequestedAt),
         });
@@ -273,26 +300,10 @@ async function runWorker(jobId, options = {}) {
     job = store.update(jobId, (current) => ({
       ...current,
       status: current.status === "cancelling" ? "cancelling" : "running",
-      phase: "testing",
+      phase: "validating",
       startedAt: current.startedAt || new Date().toISOString(),
       passwordFile: "",
     }));
-
-    const testArgs = buildTestArgs(job.selection, {
-      archivePath: job.archivePath,
-      password,
-      codePage: job.codePage,
-    });
-    await runPhase("testing", {
-      args: testArgs,
-      job,
-      store,
-      tool,
-      passwordProvided: Boolean(password),
-    });
-
-    verifyFingerprints(job.sourceFingerprint);
-    job = requireActiveJob(store, jobId);
 
     let extractionSelection = job.selection;
     let extractionArchivePath = job.archivePath;
@@ -313,7 +324,11 @@ async function runWorker(jobId, options = {}) {
         job,
         store,
         tool,
+        password,
         passwordProvided: Boolean(password),
+        codePage: job.codePage,
+        progressStart: 0,
+        progressEnd: 50,
       });
       verifyFingerprints(job.sourceFingerprint);
       requireActiveJob(store, jobId);
@@ -321,18 +336,6 @@ async function runWorker(jobId, options = {}) {
       extractionSelection = innerTarSelection();
       extractionPassword = "";
       extractionCodePage = "auto";
-      await runPhase("testing", {
-        args: buildTestArgs(extractionSelection, {
-          archivePath: extractionArchivePath,
-          password: "",
-          codePage: "auto",
-        }),
-        job,
-        store,
-        tool,
-        passwordProvided: false,
-      });
-      requireActiveJob(store, jobId);
     }
 
     let listingArgs = buildListArgs(extractionSelection, {
@@ -344,6 +347,8 @@ async function runWorker(jobId, options = {}) {
       cwd: path.dirname(extractionArchivePath),
       job,
       store,
+      password: extractionPassword,
+      encoding: listingEncoding(extractionCodePage),
     });
     if (!extractionSelection.format && listing.format) {
       extractionSelection = {
@@ -360,6 +365,8 @@ async function runWorker(jobId, options = {}) {
           cwd: path.dirname(extractionArchivePath),
           job,
           store,
+          password: extractionPassword,
+          encoding: listingEncoding(extractionCodePage),
         });
       }
     }
@@ -378,8 +385,13 @@ async function runWorker(jobId, options = {}) {
       job,
       store,
       tool,
+      password: extractionPassword,
       passwordProvided: Boolean(extractionPassword),
+      codePage: extractionCodePage,
+      progressStart: isNestedTar(job.selection) ? 50 : 0,
+      progressEnd: 100,
     });
+    recodeExtractedTree(job.outputDir, extractionCodePage);
 
     store.update(jobId, (current) => {
       if (current.status === "cancelling" || current.cancelRequestedAt) {
@@ -462,6 +474,7 @@ module.exports = {
   appendJobLog,
   defaultRunPhase,
   defaultValidateListing,
+  mapPhaseProgress,
   registerProcessGroup,
   runWorker,
 };

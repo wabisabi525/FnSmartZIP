@@ -1297,6 +1297,10 @@ button[hidden] {
         width: 100%;
     }
 
+    .job-actions {
+        justify-self: stretch;
+    }
+
     .notice-row {
         flex-direction: column;
     }
