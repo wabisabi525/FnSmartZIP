@@ -6,13 +6,16 @@ FnSmartZIP 是一款用于 fnOS的解压应用。安装后右键压缩包或分�
 
 ## 应用截图
 
-### 主界面
-
-![FnSmartZIP 主界面](docs/images/01-main-interface.png)
-
-### 密码管理器
-
-![FnSmartZIP 密码管理器](docs/images/03-password-manager.png)
+<table>
+  <tr>
+    <th width="50%">主界面</th>
+    <th width="50%">密码管理器</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/01-main-interface.png" alt="FnSmartZIP 主界面" width="100%"></td>
+    <td align="center"><img src="docs/images/03-password-manager.png" alt="FnSmartZIP 密码管理器" width="100%"></td>
+  </tr>
+</table>
 
 ## 主要功能
 
