@@ -12,8 +12,8 @@ FnSmartZIP 是一款用于 fnOS的解压应用。安装后右键压缩包或分�
 
 <table>
   <tr>
-    <th width="50%">深色模式主页</th>
-    <th width="50%">主页</th>
+    <th width="50%">深色模式</th>
+    <th width="50%">浅色模式</th>
   </tr>
   <tr>
     <td align="center"><img src="docs/images/01-main-interface.png" alt="FnSmartZIP 主界面" width="100%"></td>
@@ -23,7 +23,7 @@ FnSmartZIP 是一款用于 fnOS的解压应用。安装后右键压缩包或分�
 
 ## V2.0.0 重大更新
 
-- UI 全面焕新，加入深色模式，新增图片预览，现无需额外配置目标目录权限，修复大量 bug。
+- UI 全面焕新，加入深色模式，新增图片预览，新增设置页，新增压缩包内图片预览，修复大量 bug。现无需额外配置目标目录权限！
 
 ## 主要功能
 
